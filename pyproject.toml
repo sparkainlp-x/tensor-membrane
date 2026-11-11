@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tensor-membrane"
+version = "0.1.0"
+description = "Jean's holographic tensor network as a membrane: bulk logical qubits encoded across boundary physical qubits, with a real erasure decoder and a hard overlap-recall test. Synthetic, stdlib + NumPy; not a real quantum code."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "AGPL-3.0-only"}
+authors = [{name = "Jean-François Brisson"}]
+keywords = ["toy-model", "tensor-network", "holographic", "quantum-error-correction", "synthetic", "reproducible"]
+classifiers = ["Programming Language :: Python :: 3"]
+dependencies = ["numpy"]
+
+[project.urls]
+Homepage = "https://github.com/sparkainlp-x/tensor-membrane"
+
+[tool.setuptools]
+packages = ["tensor_membrane"]

@@ -1,0 +1,179 @@
+{
+  "version": "0.1.0",
+  "seed": 42,
+  "method": "least-squares channel inversion (pseudoinverse, rcond=1e-12) + projection onto the physical state space",
+  "noise_model": "Hermitian Gaussian added to the reduced state, sigma = epsilon / d_S",
+  "n_random_states": 16,
+  "distinguishability_worst": {
+    "0": 1.0,
+    "1": 0.973,
+    "2": 0.919,
+    "3": 0.737,
+    "4": 0.416,
+    "5": 0.213
+  },
+  "per_k": [
+    {
+      "erased_k": 0,
+      "n_subsets": 1,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 1.000000000000005,
+      "mean_cond": 1.000000000000005,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.9999999999999957,
+          "mean_fidelity": 0.9999999999999991
+        },
+        "0.01": {
+          "worst_fidelity": 0.9996812367531889,
+          "mean_fidelity": 0.9998296554844701
+        },
+        "0.1": {
+          "worst_fidelity": 0.9968451060750876,
+          "mean_fidelity": 0.9983819164105869
+        },
+        "0.5": {
+          "worst_fidelity": 0.9862317642655646,
+          "mean_fidelity": 0.9910503303362589
+        }
+      }
+    },
+    {
+      "erased_k": 1,
+      "n_subsets": 7,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 1.263243814368568,
+      "mean_cond": 1.1767388701353503,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.999999999999995,
+          "mean_fidelity": 0.999999999999999
+        },
+        "0.01": {
+          "worst_fidelity": 0.9988160498092992,
+          "mean_fidelity": 0.9995370743386133
+        },
+        "0.1": {
+          "worst_fidelity": 0.9893414929715347,
+          "mean_fidelity": 0.9950307228246148
+        },
+        "0.5": {
+          "worst_fidelity": 0.9457995656057883,
+          "mean_fidelity": 0.9767157490807659
+        }
+      }
+    },
+    {
+      "erased_k": 2,
+      "n_subsets": 21,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 1.7006616614931038,
+      "mean_cond": 1.4957133783792493,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.9999999999999954,
+          "mean_fidelity": 0.9999999999999992
+        },
+        "0.01": {
+          "worst_fidelity": 0.9966210326059689,
+          "mean_fidelity": 0.9985906125050329
+        },
+        "0.1": {
+          "worst_fidelity": 0.9626248814963287,
+          "mean_fidelity": 0.9862392700453437
+        },
+        "0.5": {
+          "worst_fidelity": 0.862123489389913,
+          "mean_fidelity": 0.9364251208902198
+        }
+      }
+    },
+    {
+      "erased_k": 3,
+      "n_subsets": 35,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 2.957093621109446,
+      "mean_cond": 2.435720437619054,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.9999999999999902,
+          "mean_fidelity": 0.9999999999999987
+        },
+        "0.01": {
+          "worst_fidelity": 0.9901453934661799,
+          "mean_fidelity": 0.9962075104352461
+        },
+        "0.1": {
+          "worst_fidelity": 0.9160919333250628,
+          "mean_fidelity": 0.9640903694595123
+        },
+        "0.5": {
+          "worst_fidelity": 0.6391443676468136,
+          "mean_fidelity": 0.8341194215959367
+        }
+      }
+    },
+    {
+      "erased_k": 4,
+      "n_subsets": 35,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 7.447175747017555,
+      "mean_cond": 5.855830338575092,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.9999999999999905,
+          "mean_fidelity": 0.9999999999999989
+        },
+        "0.01": {
+          "worst_fidelity": 0.9702828027330948,
+          "mean_fidelity": 0.9881828388846996
+        },
+        "0.1": {
+          "worst_fidelity": 0.7838706978133134,
+          "mean_fidelity": 0.8904845351692724
+        },
+        "0.5": {
+          "worst_fidelity": 0.13448622767162852,
+          "mean_fidelity": 0.6014937118944346
+        }
+      }
+    },
+    {
+      "erased_k": 5,
+      "n_subsets": 21,
+      "n_states_per_subset": 20,
+      "min_rank": 16,
+      "max_rank": 16,
+      "max_cond": 1696.969421037616,
+      "mean_cond": 290.05526026829216,
+      "by_epsilon": {
+        "0.0": {
+          "worst_fidelity": 0.9999999999999323,
+          "mean_fidelity": 0.9999999999999949
+        },
+        "0.01": {
+          "worst_fidelity": 0.06614418885357493,
+          "mean_fidelity": 0.7980392319860046
+        },
+        "0.1": {
+          "worst_fidelity": 0.01473626603497805,
+          "mean_fidelity": 0.41372097816103937
+        },
+        "0.5": {
+          "worst_fidelity": 0.015158664846047464,
+          "mean_fidelity": 0.27705574087584867
+        }
+      }
+    }
+  ]
+}

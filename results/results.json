@@ -1,0 +1,203 @@
+{
+  "version": "0.1.0",
+  "seed": 42,
+  "layers": [
+    6,
+    7,
+    6
+  ],
+  "bulk_qubits": 2,
+  "boundary_qubits": 7,
+  "isometry_max_deviation": 1.6653345369377348e-15,
+  "singular_values": [
+    0.9999999999999999,
+    0.9999999999999994,
+    0.9999999999999994,
+    0.9999999999999993
+  ],
+  "boundary_orthogonality_max_offdiag": 1.6653345369377348e-15,
+  "delocalisation": {
+    "per_qubit": [
+      {
+        "qubit": 0,
+        "mean_trace_distance": 0.1056711719056372,
+        "max_trace_distance": 0.14688015354207978,
+        "mean_entropy_bits": 0.9775840798469244
+      },
+      {
+        "qubit": 1,
+        "mean_trace_distance": 0.12379712546499476,
+        "max_trace_distance": 0.1610454190598389,
+        "mean_entropy_bits": 0.9483056066387645
+      },
+      {
+        "qubit": 2,
+        "mean_trace_distance": 0.16344524420419723,
+        "max_trace_distance": 0.23909562429673775,
+        "mean_entropy_bits": 0.9519644635656863
+      },
+      {
+        "qubit": 3,
+        "mean_trace_distance": 0.2229084361233179,
+        "max_trace_distance": 0.3141442588669183,
+        "mean_entropy_bits": 0.9231977044927043
+      },
+      {
+        "qubit": 4,
+        "mean_trace_distance": 0.14578244080646155,
+        "max_trace_distance": 0.19737751753012484,
+        "mean_entropy_bits": 0.9687453408929076
+      },
+      {
+        "qubit": 5,
+        "mean_trace_distance": 0.08875526593312931,
+        "max_trace_distance": 0.14157475984764406,
+        "mean_entropy_bits": 0.9856435088042317
+      },
+      {
+        "qubit": 6,
+        "mean_trace_distance": 0.1707800294001874,
+        "max_trace_distance": 0.2501778111451829,
+        "mean_entropy_bits": 0.931923349550992
+      }
+    ],
+    "overall_mean_trace_distance": 0.14587710197684647,
+    "overall_mean_entropy_bits": 0.9553377219703157
+  },
+  "erasure_recovery": [
+    {
+      "erased_k": 0,
+      "n_subsets": 1,
+      "min_mean_trace_distance": 1.0000000000000058,
+      "mean_mean_trace_distance": 1.0000000000000058
+    },
+    {
+      "erased_k": 1,
+      "n_subsets": 7,
+      "min_mean_trace_distance": 0.9732597952939317,
+      "mean_mean_trace_distance": 0.984774949027208
+    },
+    {
+      "erased_k": 2,
+      "n_subsets": 21,
+      "min_mean_trace_distance": 0.9189357052307562,
+      "mean_mean_trace_distance": 0.936137195505099
+    },
+    {
+      "erased_k": 3,
+      "n_subsets": 35,
+      "min_mean_trace_distance": 0.7372887367891209,
+      "mean_mean_trace_distance": 0.765898534172343
+    },
+    {
+      "erased_k": 4,
+      "n_subsets": 35,
+      "min_mean_trace_distance": 0.41588854293876626,
+      "mean_mean_trace_distance": 0.4678175538537433
+    },
+    {
+      "erased_k": 5,
+      "n_subsets": 21,
+      "min_mean_trace_distance": 0.21314735719667532,
+      "mean_mean_trace_distance": 0.2694121786079532
+    }
+  ],
+  "overlap_recall": [
+    {
+      "sigma": 0.0,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9999999999999997,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.05,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9987618244521193,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.1,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9950748095188342,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.3,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9581171414039399,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.5,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.8950334687564425,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.3,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.4,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.5,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.6,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.7,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    },
+    {
+      "sigma": 0.15,
+      "tau": 0.8,
+      "recognition_rate": 1.0,
+      "refusal_rate": 1.0,
+      "mean_max_overlap_noisy": 0.9890192247568338,
+      "mean_max_overlap_random": 0.12123482845369091
+    }
+  ]
+}

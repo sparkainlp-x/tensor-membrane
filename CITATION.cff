@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "tensor-membrane: a holographic tensor network as a membrane — bulk logical qubits encoded across boundary physical qubits, with a real erasure decoder and a hard overlap-recall test (synthetic)"
+type: software
+authors:
+  - family-names: "Brisson"
+    given-names: "Jean-François"
+    orcid: "https://orcid.org/0009-0000-9778-5374"
+    affiliation: "Spark AI NLP, Fredericton, New Brunswick, Canada"
+repository-code: "https://github.com/sparkainlp-x/tensor-membrane"
+version: 0.1.0
+date-released: "2026-11-11"
+license: AGPL-3.0-only
+abstract: >-
+  Synthetic, stdlib + NumPy toy: a holographic tensor network (7 boundary
+  physical qubits, 3 tensor layers of 6/7/6, 2 bulk logical qubits) built
+  as a working membrane. Measured: the encoding is an isometry, no single
+  boundary qubit carries the bulk, the erasure threshold is 2 (worst case),
+  a real least-squares decoder recovers the bulk with a noise-dependent
+  threshold, and the overlap-recall gate fails honestly on non-orthogonal
+  patterns (no threshold separates real from code-random; no collision
+  detection). It is not a real quantum error-correcting code and not a
+  real holographic duality. The repository documents measured behaviour
+  and limits, including negative results.
+keywords:
+  - "synthetic"
+  - "toy-model"
+  - "tensor-network"
+  - "holographic"
+  - "quantum-error-correction"
+  - "reproducible"
+  - "python"
