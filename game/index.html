@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Tensor Membrane</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2rem; }
+      * { box-sizing: border-box; }
+      :root{
+        --bg:#04060d;
+        --bg2:#070b18;
+        --panel:#0a101f;
+        --panel2:#0d1526;
+        --line:#1d2a47;
+        --line2:#2a3c63;
+        --ink:#e8eefc;
+        --muted:#93a5c9;
+        --faint:#5f7197;
+        --gold:#ffc44d;
+        --gold-deep:#f5a623;
+        --cyan:#41d9ff;
+        --green:#52ffa8;
+        --rose:#ff7d9c;
+        --danger:#ff5d73;
+        --good:#52ffa8;
+        --radius:14px;
+      }
+      html,body{ background:var(--bg); }
+      body{
+        margin:0;
+        color:var(--ink);
+        font-family:"Exo 2", system-ui, sans-serif;
+        background:
+          radial-gradient(1100px 500px at 50% -120px, rgba(65,217,255,.07), transparent 60%),
+          radial-gradient(900px 480px at 50% 115%, rgba(255,196,77,.05), transparent 60%),
+          linear-gradient(180deg, var(--bg2), var(--bg));
+        min-height:100vh;
+      }
+      .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+      .wrap{ max-width:1120px; margin:0 auto; padding:18px 16px 40px; }
+
+      /* ---------- HUD ---------- */
+      .hud{
+        display:flex; flex-wrap:wrap; gap:10px; align-items:stretch;
+        margin-bottom:14px;
+      }
+      .hud .cell{
+        background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+        padding:10px 16px; min-height:56px; display:flex; flex-direction:column; justify-content:center;
+      }
+      .hud .cell.grow{ flex:1 1 180px; }
+      .hud .lab{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+      .hud .val{ font-size:22px; font-weight:700; line-height:1.15; }
+      .hud .val.small{ font-size:15px; font-weight:600; }
+      #scoreVal{ color:var(--gold); transition:transform .25s ease; display:inline-block; }
+      #scoreVal.bump{ transform:scale(1.18); }
+      .epdots{ display:flex; gap:5px; margin-top:5px; flex-wrap:wrap; }
+      .epdot{ width:9px; height:9px; border-radius:50%; background:#22335a; border:1px solid #2c406e; }
+      .epdot.done-good{ background:var(--good); border-color:var(--good); }
+      .epdot.done-bad{ background:var(--danger); border-color:var(--danger); }
+      .epdot.done-mid{ background:var(--gold); border-color:var(--gold); }
+      .epdot.now{ box-shadow:0 0 0 2px rgba(65,217,255,.55); background:var(--cyan); border-color:var(--cyan); }
+
+      /* ---------- Layout ---------- */
+      .layout{ display:grid; grid-template-columns:1fr; gap:14px; }
+      @media (min-width:960px){ .layout{ grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); } }
+      .card{
+        background:linear-gradient(180deg, var(--panel2), var(--panel));
+        border:1px solid var(--line); border-radius:18px; padding:16px;
+      }
+      .card h2{ margin:0 0 6px; font-size:19px; font-weight:800; letter-spacing:.01em; }
+      .card h3{ margin:0 0 8px; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+
+      /* ---------- Board ---------- */
+      .boardwrap{ position:relative; }
+      svg#board{ width:100%; height:auto; display:block; }
+      .statusline{
+        margin-top:10px; border:1px solid var(--line); border-radius:12px;
+        background:rgba(4,8,18,.65); padding:11px 14px; font-size:15px; line-height:1.45; min-height:52px;
+        display:flex; align-items:center; gap:10px;
+      }
+      .statusline .pulse-dot{ flex:0 0 auto; width:10px; height:10px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px var(--cyan); animation:blink 1.6s ease-in-out infinite; }
+      @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.35} }
+
+      /* received strip */
+      .recv{ margin-top:12px; }
+      .recv-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+      .recv-head .t{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+      .recv-head .obs{ font-size:13px; color:var(--ink); }
+      .recv-head .obs b{ color:var(--gold); font-weight:600; }
+      .bars{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-top:8px; }
+      .bar-cell{ text-align:center; }
+      .bar-track{
+        height:86px; border:1px solid var(--line); border-radius:9px; background:rgba(10,16,31,.8);
+        display:flex; align-items:flex-end; justify-content:center; overflow:hidden; position:relative;
+      }
+      .bar-fill{ width:62%; border-radius:6px 6px 0 0; transition:height .5s ease, background .4s ease; min-height:2px; }
+      .bar-track.erased{ border-style:dashed; border-color:#3a2b3f; background:rgba(24,10,18,.55); }
+      .bar-track.erased .x{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#a04a63; font-size:22px; font-weight:700; }
+      .bar-lab{ font-size:11px; color:var(--faint); margin-top:5px; }
+      .flicker .bar-fill{ animation:flick .28s steps(2) infinite; }
+      @keyframes flick{ 0%{filter:brightness(1)} 50%{filter:brightness(1.55)} 100%{filter:brightness(.8)} }
+
+      /* ---------- Controls ---------- */
+      .codex{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .pat{
+        text-align:left; cursor:pointer; color:var(--ink);
+        background:rgba(13,21,38,.85); border:1px solid var(--line); border-radius:14px;
+        padding:11px 12px 10px; min-height:64px; font-family:inherit;
+        transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      }
+      .pat:hover{ border-color:var(--line2); }
+      .pat:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+      .pat.sel{ border-color:var(--pc,#fff); box-shadow:0 0 0 1px var(--pc,#fff), 0 0 22px -6px var(--pc,#fff); }
+      .pat .nm{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:16px; }
+      .pat .dot{ width:11px; height:11px; border-radius:50%; background:var(--pc); box-shadow:0 0 10px var(--pc); flex:0 0 auto; }
+      .pat .st{ margin-left:auto; font-size:12px; color:var(--muted); }
+      .pat .mini{ display:flex; gap:3px; align-items:flex-end; height:26px; margin-top:8px; }
+      .pat .mini i{ flex:1; background:var(--pc); opacity:.75; border-radius:2px 2px 0 0; min-height:2px; display:block; }
+      .controls-off{ opacity:.45; pointer-events:none; filter:saturate(.6); }
+
+      .conf{ margin-top:16px; }
+      .conf-head{ display:flex; justify-content:space-between; align-items:baseline; }
+      .conf-head label{ font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+      .conf-head .cv{ font-size:24px; font-weight:800; color:var(--gold); }
+      input[type=range]{ width:100%; accent-color:var(--gold-deep); height:36px; cursor:pointer; }
+      .payoff{ display:flex; gap:8px; font-size:13px; }
+      .payoff span{ flex:1; text-align:center; border:1px solid var(--line); border-radius:9px; padding:7px 4px; background:rgba(4,8,18,.5); }
+      .payoff .win{ color:var(--good); } .payoff .lose{ color:var(--danger); }
+
+      .actions{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:16px; }
+      @media (min-width:520px){ .actions{ grid-template-columns:1.25fr 1fr; } }
+      .btn{
+        font-family:inherit; font-weight:800; font-size:16px; letter-spacing:.03em; cursor:pointer;
+        border-radius:13px; padding:13px 16px; min-height:52px; border:1px solid transparent;
+        transition:transform .12s ease, box-shadow .15s ease, opacity .15s ease;
+      }
+      .btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+      .btn:active{ transform:translateY(1px); }
+      .btn-project{ background:linear-gradient(180deg,#ffd97a,var(--gold-deep)); color:#241703; box-shadow:0 6px 24px -8px rgba(255,196,77,.55); }
+      .btn-project:disabled{ opacity:.4; box-shadow:none; cursor:not-allowed; }
+      .btn-abstain{ background:rgba(65,217,255,.08); color:var(--cyan); border-color:#2b5a72; }
+      .btn-abstain:hover{ background:rgba(65,217,255,.15); }
+      .btn-ghost{ background:transparent; color:var(--muted); border-color:var(--line); font-weight:600; }
+      .btn-decoder{
+        width:100%; margin-top:12px; background:rgba(255,125,156,.07); color:#ffb3c2; border:1px dashed #6e3547;
+        font-weight:700; font-size:14px; min-height:48px;
+      }
+      .btn-decoder:disabled{ opacity:.45; cursor:not-allowed; }
+      .decoder-readout{
+        margin-top:10px; border:1px solid #6e3547; border-radius:12px; padding:11px 13px;
+        background:rgba(30,10,18,.5); font-size:14px; line-height:1.5; display:none;
+      }
+      .decoder-readout.show{ display:block; }
+      .fidbar{ height:10px; border-radius:6px; background:#1a2438; overflow:hidden; margin:7px 0 4px; }
+      .fidbar i{ display:block; height:100%; background:linear-gradient(90deg,var(--gold-deep),var(--gold)); border-radius:6px; transition:width .7s ease; }
+
+      /* ---------- Debrief ---------- */
+      #debrief{ display:none; }
+      #debrief.show{ display:block; }
+      .verdict{ font-size:20px; font-weight:800; margin:2px 0 4px; }
+      .verdict.good{ color:var(--good); } .verdict.bad{ color:var(--danger); } .verdict.mid{ color:var(--gold); }
+      .pts{ font-size:15px; } .pts b{ font-size:19px; }
+      .truth-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin:12px 0; font-size:14px; }
+      .truth-grid .k{ color:var(--faint); font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+      .truth-grid .v{ font-weight:600; margin-top:1px; }
+      .bench{ border-left:3px solid var(--gold-deep); background:rgba(255,196,77,.06); padding:10px 13px; border-radius:0 10px 10px 0; font-size:14px; line-height:1.55; }
+      .bench b{ color:var(--gold); }
+
+      /* ---------- Screens ---------- */
+      .screen{ display:none; }
+      .screen.on{ display:block; }
+      .intro-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
+      @media (min-width:900px){ .intro-grid{ grid-template-columns:1.2fr 1fr; } }
+      .lead{ font-size:17px; line-height:1.6; color:#cdd9f2; }
+      .lead b{ color:var(--ink); }
+      ul.how{ margin:8px 0 0; padding-left:19px; line-height:1.65; font-size:15px; color:#cdd9f2; }
+      ul.how li{ margin-bottom:6px; }
+      table.bench-table{ width:100%; border-collapse:collapse; font-size:14px; }
+      table.bench-table th, table.bench-table td{ padding:7px 8px; text-align:left; border-bottom:1px solid var(--line); }
+      table.bench-table th{ color:var(--faint); font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; }
+      table.bench-table td.num, table.bench-table th.num{ text-align:right; font-family:"IBM Plex Mono",monospace; }
+      .honest{ border:1px solid #57451d; background:rgba(255,196,77,.05); border-radius:14px; padding:13px 15px; font-size:14px; line-height:1.6; color:#e6d9b8; }
+      .honest b{ color:var(--gold); }
+      .btn-start{ background:linear-gradient(180deg,#ffd97a,var(--gold-deep)); color:#241703; box-shadow:0 8px 28px -8px rgba(255,196,77,.6); width:100%; font-size:18px; min-height:58px; }
+      .foot{ margin-top:18px; text-align:center; color:var(--faint); font-size:12.5px; line-height:1.6; }
+
+      /* ---------- End ---------- */
+      .final-score{ font-size:52px; font-weight:800; color:var(--gold); line-height:1; }
+      .grade{ font-size:21px; font-weight:800; margin-top:6px; }
+      table.cal{ width:100%; border-collapse:collapse; font-size:14px; }
+      table.cal th, table.cal td{ padding:7px 8px; border-bottom:1px solid var(--line); text-align:right; }
+      table.cal th:first-child, table.cal td:first-child{ text-align:left; }
+      table.cal th{ color:var(--faint); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+      .stat-row{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+      @media (min-width:640px){ .stat-row{ grid-template-columns:repeat(4,1fr); } }
+      .stat{ border:1px solid var(--line); border-radius:12px; padding:11px 13px; background:rgba(4,8,18,.45); }
+      .stat .n{ font-size:24px; font-weight:800; }
+      .stat .l{ font-size:11.5px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+      .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+      @media (prefers-reduced-motion: reduce){
+        *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- ================= INTRO ================= -->
+      <section id="screen-intro" class="screen on">
+        <div class="intro-grid">
+          <div class="card">
+            <h2>You are the membrane</h2>
+            <p class="lead">Deep in the bulk, two logical qubits hold a pattern. A holographic tensor network — <b>3 layers of tensors, 6 · 7 · 6</b> — encodes it outward onto <b>7 boundary qubits</b>. The pattern survives out there, smeared across the whole boundary… until something attacks it.</p>
+            <p class="lead">Across <b>15 episodes</b>, a state arrives at your boundary. It might be a real pattern, damaged by erasure or noise. It might be a <b>collision</b> — two patterns superposed — or <b>pure randomness</b> wearing a pattern's shape. Your call, every time:</p>
+            <ul class="how">
+              <li><b>PROJECT</b> — name the pattern and push it through the gate, with a confidence of 50–99%. Calibration scoring: high confidence pays more when you're right — and costs more when you're wrong.</li>
+              <li><b>ABSTAIN</b> — refuse. Costs a little when the pattern was real; saves you when it was fake or a collision.</li>
+              <li><b>Sealed decoder</b> — once per episode, open the reference channel for <b>−15 pts</b> to learn the true recovery fidelity before you decide.</li>
+            </ul>
+            <div style="margin-top:16px">
+              <button class="btn btn-start" id="btnStart">Enter the membrane</button>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <h3>Measured on the real model</h3>
+              <table class="bench-table">
+                <thead><tr><th>Boundary erasures (k)</th><th class="num">Distinguishability</th></tr></thead>
+                <tbody>
+                  <tr><td>k = 1</td><td class="num">0.973</td></tr>
+                  <tr><td>k = 2</td><td class="num">0.919</td></tr>
+                  <tr><td>k = 3</td><td class="num">0.737</td></tr>
+                  <tr><td>k = 4</td><td class="num">0.416</td></tr>
+                </tbody>
+              </table>
+              <p style="font-size:14px; line-height:1.6; color:#cdd9f2; margin:10px 0 0">
+                Erasure threshold by distinguishability: <b style="color:var(--gold)">2</b>. A real least-squares decoder does better when noise is low — it recovers up to <b>k = 4</b> at ε = 0.01, <b>k = 3</b> at ε = 0.1, only <b>k = 1</b> at ε = 0.5. And the gate has one honest blind spot: <b style="color:var(--rose)">it cannot detect collisions</b> — a superposition is always accepted and named as one of its pair.
+              </p>
+            </div>
+            <div class="honest">
+              <b>Honest terms.</b> This is a toy simulation of the tensor-network structure — not a real quantum device and not a real error-correcting code. The bulk is only 2 qubits; the wiring is one documented choice among many. The collision blind spot is a measured limit of the model, not a bug. Nothing you enter is saved.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= GAME ================= -->
+      <section id="screen-game" class="screen">
+        <div class="hud">
+          <div class="cell">
+            <span class="lab">Episode</span>
+            <span class="val small" id="epLabel">1 / 15</span>
+            <div class="epdots" id="epDots" aria-hidden="true"></div>
+          </div>
+          <div class="cell">
+            <span class="lab">Score</span>
+            <span class="val"><span id="scoreVal">0</span></span>
+          </div>
+          <div class="cell grow">
+            <span class="lab">Membrane state</span>
+            <span class="val small" id="hudState">Encoding…</span>
+          </div>
+        </div>
+
+        <div class="layout">
+          <div class="card boardwrap">
+            <svg id="board" viewBox="0 0 760 600" role="img" aria-label="Tensor network: 7 boundary qubits across the top, three tensor layers of 6, 7 and 6 nodes, and a 2-qubit bulk core at the bottom"></svg>
+            <div class="statusline"><span class="pulse-dot" aria-hidden="true"></span><span id="statusText">A pattern rises from the bulk…</span></div>
+            <div class="recv">
+              <div class="recv-head">
+                <span class="t">Received boundary state</span>
+                <span class="obs" id="obsLine">awaiting signal</span>
+              </div>
+              <div class="bars" id="bars"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" id="controlCard">
+              <h3>The four bulk patterns</h3>
+              <div class="codex" id="codex"></div>
+              <div class="conf">
+                <div class="conf-head"><label for="confRange">Your confidence</label><span class="cv mono" id="confVal">75%</span></div>
+                <input type="range" id="confRange" min="50" max="99" value="75" step="1" aria-label="Confidence from 50 to 99 percent" />
+                <div class="payoff mono">
+                  <span>if right <b class="win" id="payWin">+94</b></span>
+                  <span>if wrong <b class="lose" id="payLose">−56</b></span>
+                  <span>abstain: <b>−10</b> real · <b class="win">+25</b> fake</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-project" id="btnProject" disabled>Project — name it</button>
+                <button class="btn btn-abstain" id="btnAbstain">Abstain</button>
+              </div>
+              <button class="btn btn-decoder" id="btnDecoder">Open sealed decoder · −15 pts</button>
+              <div class="decoder-readout" id="decoderOut" aria-live="polite"></div>
+            </div>
+
+            <div class="card" id="debrief" aria-live="polite">
+              <h3>Debrief</h3>
+              <div class="verdict" id="dbVerdict"></div>
+              <div class="pts" id="dbPts"></div>
+              <div class="truth-grid" id="dbTruth"></div>
+              <div class="bench" id="dbBench"></div>
+              <div style="margin-top:14px">
+                <button class="btn btn-project" id="btnNext" style="width:100%">Next episode</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="foot">Toy simulation of a holographic tensor network — 7 boundary qubits, tensor layers 6·7·6, a 2-qubit bulk. Not a quantum device, not an error-correcting code. Benchmarks measured on the model (seed 42). Nothing you enter is saved.</p>
+      </section>
+
+      <!-- ================= END ================= -->
+      <section id="screen-end" class="screen">
+        <div class="intro-grid">
+          <div class="card">
+            <h3>Final score</h3>
+            <div class="final-score mono" id="finalScore">0</div>
+            <div class="grade" id="finalGrade"></div>
+            <p class="lead" id="finalRead" style="margin-top:10px"></p>
+            <div style="margin-top:14px"><button class="btn btn-start" id="btnAgain">Play again</button></div>
+          </div>
+          <div class="card">
+            <h3>Calibration — stated vs actual</h3>
+            <table class="cal">
+              <thead><tr><th>Confidence</th><th>Calls</th><th>Stated</th><th>Actual</th></tr></thead>
+              <tbody id="calBody"></tbody>
+            </table>
+            <p style="font-size:14px; line-height:1.6; color:#cdd9f2" id="calNote"></p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <h3>The run, in numbers</h3>
+          <div class="stat-row" id="statRow"></div>
+          <p style="font-size:14.5px; line-height:1.65; color:#cdd9f2; margin:14px 0 0">
+            What the membrane taught: the bulk survives <b style="color:var(--gold)">2 erasures</b> by distinguishability (0.973 → 0.919 → 0.737), and a real decoder stretches that to k = 4 at ε = 0.01, k = 3 at ε = 0.1, k = 1 at ε = 0.5 — recovery is a noise budget, not a promise. No threshold separates a real pattern from a clever fake, and <b style="color:var(--rose)">no gate setting detects a collision</b>: a superposition is always accepted and named as one of its pair. Knowing when to abstain is the whole game.
+          </p>
+        </div>
+        <p class="foot">Tensor Membrane — a toy simulation. Measured benchmarks from the tensor-membrane model (github.com/sparkainlp-x/tensor-membrane), seed 42. Nothing you entered was saved.</p>
+      </section>
+
+    </div>
+
+    <script>
+    (function(){
+      "use strict";
+
+      /* ================= Data — the measured membrane ================= */
+      var PATTERNS = [
+        { name:"Aurora",   state:"|00⟩", color:"#ffc44d", sig:[0.95,0.30,0.80,0.20,0.85,0.30,0.90] },
+        { name:"Vesper",   state:"|01⟩", color:"#41d9ff", sig:[0.25,0.90,0.30,0.95,0.20,0.85,0.35] },
+        { name:"Meridian", state:"|10⟩", color:"#52ffa8", sig:[0.70,0.65,0.15,0.60,0.95,0.50,0.20] },
+        { name:"Solstice", state:"|11⟩", color:"#ff7d9c", sig:[0.15,0.45,0.95,0.50,0.30,0.95,0.70] }
+      ];
+      /* Distinguishability of the bulk after k erasures (measured, worst case) */
+      var DIST = [1.000, 0.973, 0.919, 0.737, 0.416, 0.213];
+      /* Decoder worst-case recovery fidelity (measured), by noise eps then k */
+      var DECODER = {
+        "0":    [1.0000, 1.0000, 1.0000, 1.0000],
+        "0.01": [0.9997, 0.9988, 0.9966, 0.9901],
+        "0.1":  [0.9968, 0.9893, 0.9626, 0.9161],
+        "0.5":  [0.9862, 0.9458, 0.8621, 0.6391]
+      };
+      var NOISE_NAME = { "0":"none", "0.01":"low · ε = 0.01", "0.1":"medium · ε = 0.1", "0.5":"high · ε = 0.5" };
+      var VIS_NOISE  = { "0":0.0, "0.01":0.045, "0.1":0.13, "0.5":0.32 };
+
+      /* type: clean | erasure | noise | collision | random. truth = pattern idx, pair = [a,b] for collisions */
+      var EPISODES = [
+        { type:"clean",     truth:0, erased:[],          eps:"0"    },
+        { type:"erasure",   truth:1, erased:[3],         eps:"0"    },
+        { type:"noise",     truth:2, erased:[],          eps:"0.01" },
+        { type:"random",    truth:-1, erased:[],         eps:"0"    },
+        { type:"erasure",   truth:3, erased:[1,5],       eps:"0"    },
+        { type:"clean",     truth:1, erased:[],          eps:"0"    },
+        { type:"collision", truth:-1, pair:[0,2], erased:[], eps:"0" },
+        { type:"erasure",   truth:0, erased:[0,3,6],     eps:"0"    },
+        { type:"noise",     truth:3, erased:[],          eps:"0.1"  },
+        { type:"random",    truth:-1, erased:[],         eps:"0.1"  },
+        { type:"erasure",   truth:1, erased:[2,6],       eps:"0.01" },
+        { type:"noise",     truth:2, erased:[],          eps:"0.5"  },
+        { type:"collision", truth:-1, pair:[1,3], erased:[], eps:"0" },
+        { type:"erasure",   truth:3, erased:[4],         eps:"0"    },
+        { type:"erasure",   truth:2, erased:[0,4],       eps:"0.1"  }
+      ];
+
+      /* ================= Utils ================= */
+      function mulberry32(seed){ return function(){ seed|=0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+      function clamp01(x){ return x < 0 ? 0 : x > 1 ? 1 : x; }
+      function $(id){ return document.getElementById(id); }
+      function hexRgb(h){ return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
+      function mixHex(a,b,t){ var A=hexRgb(a), B=hexRgb(b), out=A.map(function(v,i){ return Math.round(v+(B[i]-v)*t); }); return "rgb("+out.join(",")+")"; }
+      function cosine(a,b){ var d=0,na=0,nb=0,i; for(i=0;i<a.length;i++){ d+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return d/(Math.sqrt(na)*Math.sqrt(nb)); }
+      var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      function sleep(ms){ return new Promise(function(r){ setTimeout(r, REDUCED ? Math.min(ms,60) : ms); }); }
+
+      /* ================= Episode signatures ================= */
+      function randomSig(seed){
+        var tries=0;
+        while(tries < 60){
+          var rng = mulberry32(seed + tries*131), s=[], i, ok=true, p, a, b, blend;
+          for(i=0;i<7;i++) s.push(0.12 + rng()*0.83);
+          for(p=0;p<4;p++) if(cosine(s, PATTERNS[p].sig) > 0.74) ok=false;
+          for(a=0;a<4;a++) for(b=a+1;b<4;b++){ blend = PATTERNS[a].sig.map(function(v,i){ return (v+PATTERNS[b].sig[i])/2; }); if(cosine(s, blend) > 0.82) ok=false; }
+          if(ok) return s;
+          tries++;
+        }
+        return s;
+      }
+      function baseSig(ep, idx){
+        if(ep.type === "collision"){ var A=PATTERNS[ep.pair[0]].sig, B=PATTERNS[ep.pair[1]].sig; return A.map(function(v,i){ return (v+B[i])/2; }); }
+        if(ep.type === "random") return randomSig(9000 + idx*977);
+        return PATTERNS[ep.truth].sig.slice();
+      }
+      function epColor(ep){
+        if(ep.type === "collision") return mixHex(PATTERNS[ep.pair[0]].color, PATTERNS[ep.pair[1]].color, 0.5);
+        if(ep.type === "random") return "#9fb4c8";
+        return PATTERNS[ep.truth].color;
+      }
+      function observedSig(ep, idx){
+        var base = baseSig(ep, idx), rng = mulberry32(4000 + idx*331), vn = VIS_NOISE[ep.eps];
+        return base.map(function(v,i){ if(ep.erased.indexOf(i) >= 0) return null; return clamp01(v + (rng()-0.5)*2*vn); });
+      }
+      function fidelity(ep, idx){
+        var rng = mulberry32(7700 + idx*613), j = (rng()-0.5)*0.008;
+        if(ep.type === "random") return 0.15 + rng()*0.17;
+        if(ep.type === "collision") return 0.885 + (rng()-0.5)*0.02; /* gate overlap with a pair member ≈ 0.895 */
+        var f = DECODER[ep.eps][ep.erased.length];
+        return f >= 1 ? 1 : Math.min(0.999, Math.max(0.01, f + j));
+      }
+
+      /* ================= Board (SVG) ================= */
+      var NS = "http://www.w3.org/2000/svg";
+      var BX = [64,170,276,382,488,594,700], AX = [117,223,329,435,541,647];
+      var ROWS = [
+        { y:58,  xs:BX, kind:"boundary" },
+        { y:188, xs:AX, kind:"tensor" },
+        { y:318, xs:BX, kind:"tensor" },
+        { y:448, xs:AX, kind:"tensor" }
+      ];
+      var BULK = [ {x:346,y:548}, {x:414,y:548} ];
+      var bonds = [], chains = [], nodeEls = [], orbEls = [], bulkEls = [], pulseLayer = null;
+
+      function el(tag, attrs, parent){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+      function buildBoard(){
+        var svg = $("board");
+        var defs = el("defs", {}, svg);
+        ["#ffc44d","#41d9ff","#52ffa8","#ff7d9c","#9fb4c8"].forEach(function(c, i){
+          var g = el("radialGradient", { id:"glow"+i }, defs);
+          el("stop", { offset:"0%", "stop-color":c, "stop-opacity":"0.85" }, g);
+          el("stop", { offset:"55%", "stop-color":c, "stop-opacity":"0.22" }, g);
+          el("stop", { offset:"100%", "stop-color":c, "stop-opacity":"0" }, g);
+        });
+        var bondG = el("g", { id:"bonds" }, svg);
+        var r, i, j;
+        /* bonds between consecutive rows */
+        for(r=0;r<ROWS.length-1;r++){
+          for(i=0;i<ROWS[r].xs.length;i++){
+            for(j=0;j<ROWS[r+1].xs.length;j++){
+              var dx = Math.abs(ROWS[r].xs[i]-ROWS[r+1].xs[j]);
+              if(dx <= 115) bonds.push({ x1:ROWS[r].xs[i], y1:ROWS[r].y, x2:ROWS[r+1].xs[j], y2:ROWS[r+1].y });
+            }
+          }
+        }
+        ROWS[3].xs.forEach(function(x){ BULK.forEach(function(b){ if(Math.abs(x-b.x) <= 190) bonds.push({ x1:x, y1:448, x2:b.x, y2:b.y }); }); });
+        bonds.push({ x1:BULK[0].x, y1:BULK[0].y, x2:BULK[1].x, y2:BULK[1].y });
+        bonds.forEach(function(b){
+          el("line", { x1:b.x1, y1:b.y1, x2:b.x2, y2:b.y2, stroke:"rgba(90,140,220,0.20)", "stroke-width":1.4 }, bondG);
+        });
+        /* pulse chains: bulk centre -> nearest node each row -> boundary i */
+        BX.forEach(function(bx){
+          function nearest(row){ var best=row.xs[0], bd=1e9; row.xs.forEach(function(x){ var d=Math.abs(x-bx); if(d<bd){bd=d;best=x;} }); return best; }
+          chains.push([ {x:380,y:548}, {x:nearest(ROWS[3]),y:448}, {x:nearest(ROWS[2]),y:318}, {x:nearest(ROWS[1]),y:188}, {x:bx,y:58} ]);
+        });
+        pulseLayer = el("g", { id:"pulses" }, svg);
+        /* row labels */
+        var labels = [ ["BOUNDARY · 7 PHYSICAL QUBITS", 30], ["TENSOR LAYER 1 · 6", 168], ["TENSOR LAYER 2 · 7", 298], ["TENSOR LAYER 3 · 6", 428], ["BULK · 2 LOGICAL QUBITS", 586] ];
+        labels.forEach(function(L){
+          var t = el("text", { x:8, y:L[1], fill:"#5f7197", "font-size":"10.5", "letter-spacing":"1.6", "font-family":"IBM Plex Mono, monospace" }, svg);
+          t.textContent = L[0];
+        });
+        /* tensor nodes */
+        ROWS.slice(1).forEach(function(row){
+          row.xs.forEach(function(x){
+            var g = el("g", {}, svg);
+            el("circle", { cx:x, cy:row.y, r:13, fill:"rgba(65,217,255,0.10)" }, g);
+            el("rect", { x:x-5.5, y:row.y-5.5, width:11, height:11, rx:2.5, transform:"rotate(45 "+x+" "+row.y+")", fill:"#0d1a30", stroke:"#41d9ff", "stroke-width":1.3, "stroke-opacity":"0.85" }, g);
+            nodeEls.push(g);
+          });
+        });
+        /* bulk core */
+        el("ellipse", { cx:380, cy:548, rx:86, ry:30, fill:"rgba(255,196,77,0.07)" }, svg);
+        BULK.forEach(function(b){
+          var g = el("g", {}, svg);
+          var halo = el("circle", { cx:b.x, cy:b.y, r:26, fill:"rgba(255,196,77,0.16)" }, g);
+          var core = el("circle", { cx:b.x, cy:b.y, r:11, fill:"#ffd97a", stroke:"#fff2cf", "stroke-width":1.5 }, g);
+          bulkEls.push({ g:g, halo:halo, core:core });
+        });
+        /* boundary orbs */
+        BX.forEach(function(x, i){
+          var g = el("g", {}, svg);
+          var glow = el("circle", { cx:x, cy:58, r:30, fill:"url(#glow1)", opacity:0.25 }, g);
+          var ring = el("circle", { cx:x, cy:58, r:15, fill:"none", stroke:"#33507e", "stroke-width":1.2, "stroke-dasharray":"3 4" }, g);
+          var core = el("circle", { cx:x, cy:58, r:7, fill:"#33507e" }, g);
+          var xmark = el("text", { x:x, y:65, "text-anchor":"middle", fill:"#ff5d73", "font-size":"19", "font-weight":"700", opacity:0 }, g);
+          xmark.textContent = "×";
+          var lab = el("text", { x:x, y:38, "text-anchor":"middle", fill:"#5f7197", "font-size":"10.5", "font-family":"IBM Plex Mono, monospace" }, g);
+          lab.textContent = "Q" + (i+1);
+          orbEls.push({ g:g, glow:glow, ring:ring, core:core, x:xmark });
+        });
+      }
+      function glowIndex(color){
+        var map = { "#ffc44d":0, "#41d9ff":1, "#52ffa8":2, "#ff7d9c":3, "#9fb4c8":4 };
+        return map[color] !== undefined ? map[color] : 1;
+      }
+      function setOrb(i, val, color, erased){
+        var o = orbEls[i]; if(!o) return;
+        if(erased){
+          o.core.setAttribute("r", 6); o.core.setAttribute("fill", "#1c1420"); o.core.setAttribute("stroke", "#4a2436");
+          o.core.setAttribute("stroke-width", 1.4);
+          o.glow.setAttribute("opacity", 0); o.ring.setAttribute("stroke", "#6e3547"); o.x.setAttribute("opacity", 1);
+          return;
+        }
+        o.x.setAttribute("opacity", 0);
+        o.ring.setAttribute("stroke", "#33507e"); o.core.removeAttribute("stroke");
+        var v = val === null || val === undefined ? 0.12 : val;
+        o.core.setAttribute("r", (5 + 11*v).toFixed(1));
+        o.core.setAttribute("fill", color);
+        o.glow.setAttribute("fill", "url(#glow" + glowIndex(color) + ")");
+        o.glow.setAttribute("opacity", (0.15 + 0.8*v).toFixed(2));
+        o.glow.setAttribute("r", (20 + 22*v).toFixed(1));
+      }
+      function setBulk(color){
+        bulkEls.forEach(function(b){
+          b.core.setAttribute("fill", color);
+          b.halo.setAttribute("fill", color); b.halo.setAttribute("opacity", 0.18);
+        });
+      }
+      function resetBoard(){
+        for(var i=0;i<7;i++) setOrb(i, 0.1, "#33507e", false);
+        setBulk("#ffd97a");
+      }
+
+      /* ================= Pulses ================= */
+      var particles = [], flow = { active:false, color:"#41d9ff", rate:0 };
+      function chainPoint(chain, d){
+        var acc=0, i;
+        for(i=0;i<chain.length-1;i++){
+          var a=chain[i], b=chain[i+1], len=Math.hypot(b.x-a.x, b.y-a.y);
+          if(d <= acc+len){ var t = len ? (d-acc)/len : 0; return { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t }; }
+          acc += len;
+        }
+        return chain[chain.length-1];
+      }
+      function chainLen(chain){ var L=0,i; for(i=0;i<chain.length-1;i++) L += Math.hypot(chain[i+1].x-chain[i].x, chain[i+1].y-chain[i].y); return L; }
+      var lastT = 0, spawnAcc = 0;
+      function tick(ts){
+        requestAnimationFrame(tick);
+        if(REDUCED) return;
+        var dt = Math.min(50, ts - (lastT || ts)); lastT = ts;
+        var rate = flow.active ? 26 : 2.2;
+        spawnAcc += dt * rate / 1000;
+        while(spawnAcc >= 1 && particles.length < 46){
+          spawnAcc -= 1;
+          var c = chains[Math.floor(Math.random()*chains.length)];
+          var p = { chain:c, d:0, len:chainLen(c), speed: flow.active ? 340+Math.random()*160 : 120, color: flow.active ? flow.color : "#41d9ff", el: el("circle", { r: flow.active ? 3.1 : 2.2, fill: flow.active ? flow.color : "#41d9ff", opacity: flow.active ? 0.95 : 0.30 }, pulseLayer) };
+          particles.push(p);
+        }
+        for(var i=particles.length-1;i>=0;i--){
+          var q = particles[i]; q.d += q.speed * dt/1000;
+          if(q.d >= q.len){ q.el.remove(); particles.splice(i,1); continue; }
+          var pos = chainPoint(q.chain, q.d);
+          q.el.setAttribute("cx", pos.x.toFixed(1)); q.el.setAttribute("cy", pos.y.toFixed(1));
+          var fade = Math.min(1, Math.min(q.d, q.len-q.d)/40 + 0.15);
+          q.el.setAttribute("opacity", ((flow.active ? 0.95 : 0.30) * fade).toFixed(2));
+        }
+      }
+
+      /* ================= Game state ================= */
+      var S = null;
+      function newGame(){
+        S = { ep:0, score:0, selected:-1, conf:75, decoderUsed:false, phase:"idle",
+              results:[], projections:[], projRight:0, projWrong:0, abstRight:0, abstWrong:0, decoders:0, runToken:0 };
+      }
+      function setScore(delta){
+        S.score += delta;
+        var v = $("scoreVal"); v.textContent = S.score;
+        v.classList.remove("bump"); void v.offsetWidth; v.classList.add("bump");
+      }
+      function buildDots(){
+        var d = $("epDots"); d.innerHTML = "";
+        EPISODES.forEach(function(_, i){ var s=document.createElement("span"); s.className="epdot"; s.id="dot"+i; d.appendChild(s); });
+      }
+      function buildCodex(){
+        var c = $("codex"); c.innerHTML = "";
+        PATTERNS.forEach(function(p, i){
+          var b = document.createElement("button");
+          b.className = "pat"; b.style.setProperty("--pc", p.color);
+          b.setAttribute("aria-label", "Project pattern " + p.name + ", bulk state " + p.state);
+          var mini = p.sig.map(function(v){ return '<i style="height:' + Math.round(v*100) + '%"></i>'; }).join("");
+          b.innerHTML = '<span class="nm"><span class="dot"></span>' + p.name + '<span class="st mono">' + p.state + '</span></span><span class="mini" aria-hidden="true">' + mini + '</span>';
+          b.addEventListener("click", function(){ selectPattern(i); });
+          c.appendChild(b);
+        });
+      }
+      function buildBars(){
+        var b = $("bars"); b.innerHTML = "";
+        for(var i=0;i<7;i++){
+          var cell = document.createElement("div"); cell.className = "bar-cell";
+          cell.innerHTML = '<div class="bar-track" id="btrack'+i+'"><div class="bar-fill" id="bfill'+i+'" style="height:4%"></div></div><div class="bar-lab mono">Q'+(i+1)+'</div>';
+          b.appendChild(cell);
+        }
+      }
+      function selectPattern(i){
+        if(S.phase !== "decide") return;
+        S.selected = i;
+        var cards = document.querySelectorAll(".pat");
+        cards.forEach(function(el2, j){ el2.classList.toggle("sel", j === i); });
+        $("btnProject").disabled = false;
+        $("btnProject").textContent = "Project — " + PATTERNS[i].name;
+      }
+      function payoff(conf){
+        var c = conf/100;
+        return { win: Math.round(100*(2*c - c*c)), lose: -Math.round(100*c*c) };
+      }
+      function updateConf(){
+        S.conf = parseInt($("confRange").value, 10);
+        $("confVal").textContent = S.conf + "%";
+        var p = payoff(S.conf);
+        $("payWin").textContent = "+" + p.win;
+        $("payLose").textContent = "−" + Math.abs(p.lose);
+      }
+      function setControls(on){
+        $("controlCard").classList.toggle("controls-off", !on);
+        $("btnAbstain").disabled = !on;
+        $("confRange").disabled = !on;
+        if(!on) $("btnProject").disabled = true;
+      }
+
+      /* ================= Episode flow ================= */
+      async function runEpisode(){
+        var idx = S.ep, ep = EPISODES[idx], token = ++S.runToken;
+        S.selected = -1; S.decoderUsed = false; S.phase = "encode";
+        document.querySelectorAll(".pat").forEach(function(el2){ el2.classList.remove("sel"); });
+        $("btnProject").disabled = true; $("btnProject").textContent = "Project — name it";
+        $("btnDecoder").disabled = false; $("btnDecoder").textContent = "Open sealed decoder · −15 pts";
+        $("decoderOut").className = "decoder-readout"; $("decoderOut").innerHTML = "";
+        $("debrief").className = "card";
+        $("epLabel").textContent = (idx+1) + " / 15";
+        EPISODES.forEach(function(_, i){ var d=$("dot"+i); if(d) d.classList.toggle("now", i === idx); });
+        setControls(false);
+        resetBoard();
+        for(var i=0;i<7;i++){ var bf=$("bfill"+i), bt=$("btrack"+i); if(bf){ bf.style.height="4%"; } if(bt){ bt.classList.remove("erased"); var x=bt.querySelector(".x"); if(x) x.remove(); } }
+        $("bars").classList.remove("flicker");
+        $("obsLine").textContent = "awaiting signal";
+        $("hudState").textContent = "Encoding a bulk pattern…";
+        $("statusText").textContent = "Deep in the bulk, a pattern forms. The tensors carry it outward — watch it rise to the boundary.";
+
+        var color = epColor(ep), base = baseSig(ep, idx);
+        setBulk(ep.type === "random" ? "#5f7197" : color);
+        flow.active = ep.type !== "random"; flow.color = color;
+        await sleep(1250); if(token !== S.runToken) return;
+        /* boundary lights with the clean encoded state */
+        for(i=0;i<7;i++){ setOrb(i, base[i], color, false); await sleep(70); if(token !== S.runToken) return; }
+        await sleep(350); if(token !== S.runToken) return;
+        /* attack */
+        flow.active = false;
+        var obs = observedSig(ep, idx);
+        ep.erased.forEach(function(q){ setOrb(q, null, color, true); });
+        var vn = parseFloat(ep.eps);
+        if(vn > 0) $("bars").classList.add("flicker");
+        for(i=0;i<7;i++){
+          var track = $("btrack"+i), fill = $("bfill"+i);
+          if(ep.erased.indexOf(i) >= 0){
+            track.classList.add("erased");
+            var x = document.createElement("span"); x.className="x"; x.textContent="×"; track.appendChild(x);
+            fill.style.height = "0%";
+          } else {
+            fill.style.height = Math.round(obs[i]*100) + "%";
+            fill.style.background = color;
+            setOrb(i, obs[i], color, false);
+          }
+        }
+        var parts = [];
+        parts.push(ep.erased.length ? ("<b>" + ep.erased.length + " qubit" + (ep.erased.length>1?"s":"") + " dark</b>") : "<b>no erasures</b>");
+        parts.push("noise: <b>" + NOISE_NAME[ep.eps] + "</b>");
+        $("obsLine").innerHTML = parts.join(" · ");
+        $("hudState").textContent = "Boundary under attack — your call";
+        $("statusText").textContent = "The boundary state is in. It may be a true pattern carrying damage — or a collision, or nothing at all. Match it against the four patterns, set your confidence, and decide.";
+        S.phase = "decide";
+        setControls(true);
+        if(S.selected < 0) $("btnProject").disabled = true;
+      }
+
+      function openDecoder(){
+        if(S.phase !== "decide" || S.decoderUsed) return;
+        S.decoderUsed = true; S.decoders++;
+        setScore(-15);
+        var ep = EPISODES[S.ep], f = fidelity(ep, S.ep);
+        $("btnDecoder").disabled = true; $("btnDecoder").textContent = "Decoder opened · −15 pts";
+        var out = $("decoderOut"); out.className = "decoder-readout show";
+        var pct = Math.round(f*1000)/10;
+        var read = f >= 0.9 ? "A stored pattern rebuilds cleanly from what survives." :
+                   f >= 0.6 ? "A pattern is probably there, but the reconstruction is strained." :
+                              "Nothing stored rebuilds from this — the boundary state matches no pattern well.";
+        out.innerHTML = '<span class="mono" style="color:var(--rose); letter-spacing:.1em; font-size:11px;">SEALED DECODER · RECOVERY FIDELITY</span>' +
+          '<div class="fidbar"><i style="width:' + (f*100) + '%"></i></div>' +
+          '<b class="mono" style="font-size:19px">' + f.toFixed(3) + '</b> <span style="color:var(--muted)">(' + pct + '%)</span><br>' + read +
+          '<br><span style="color:var(--muted)">Caution: fidelity cannot rule out a collision — the gate accepts superpositions at high fidelity too.</span>';
+      }
+
+      function decide(kind){
+        if(S.phase !== "decide") return;
+        if(kind === "project" && S.selected < 0) return;
+        S.phase = "debrief";
+        setControls(false);
+        $("btnDecoder").disabled = true;
+        var idx = S.ep, ep = EPISODES[idx];
+        var isReal = ep.truth >= 0, pts = 0, verdict = "", vclass = "", yourCall = "";
+        if(kind === "project"){
+          var correct = isReal && S.selected === ep.truth;
+          var p = payoff(S.conf);
+          pts = correct ? p.win : p.lose;
+          S.projections.push({ conf:S.conf, correct:correct });
+          if(correct){ S.projRight++; verdict = "Correct projection"; vclass = "good"; }
+          else { S.projWrong++; verdict = isReal ? "Wrong pattern" : (ep.type === "collision" ? "The gate is fooled — that was a collision" : "Projected onto noise"); vclass = "bad"; }
+          yourCall = "Projected <b>" + PATTERNS[S.selected].name + "</b> at " + S.conf + "% confidence";
+        } else {
+          if(isReal){ pts = -10; S.abstWrong++; verdict = "A real pattern slipped past"; vclass = "mid"; }
+          else { pts = 25; S.abstRight++; verdict = ep.type === "collision" ? "Abstained on a collision — the only safe call" : "Abstained on a fake — well refused"; vclass = "good"; }
+          yourCall = "Abstained";
+        }
+        setScore(pts);
+        var dot = $("dot"+idx);
+        if(dot){ dot.classList.remove("now"); dot.classList.add(pts > 0 ? "done-good" : pts < 0 ? "done-bad" : "done-mid"); }
+        /* truth */
+        var truthName = ep.type === "collision" ? ("Collision — " + PATTERNS[ep.pair[0]].name + " + " + PATTERNS[ep.pair[1]].name + " superposed")
+                        : ep.type === "random" ? "Random state — no stored pattern"
+                        : PATTERNS[ep.truth].name + " " + PATTERNS[ep.truth].state;
+        var f = fidelity(ep, idx);
+        $("dbVerdict").textContent = verdict; $("dbVerdict").className = "verdict " + vclass;
+        $("dbPts").innerHTML = "This episode: <b class='mono' style='color:" + (pts>=0 ? "var(--good)" : "var(--danger)") + "'>" + (pts>=0?"+":"−") + Math.abs(pts) + " pts</b>" + (S.decoderUsed ? " <span style='color:var(--muted)'>(decoder −15 already charged)</span>" : "");
+        $("dbTruth").innerHTML =
+          '<div><div class="k">What it was</div><div class="v">' + truthName + '</div></div>' +
+          '<div><div class="k">Your call</div><div class="v">' + yourCall + '</div></div>' +
+          '<div><div class="k">Erasures</div><div class="v mono">k = ' + ep.erased.length + (ep.erased.length ? " (Q" + ep.erased.map(function(q){return q+1;}).join(", Q") + ")" : "") + '</div></div>' +
+          '<div><div class="k">Noise</div><div class="v mono">' + NOISE_NAME[ep.eps] + '</div></div>' +
+          '<div><div class="k">Decoder recovery fidelity</div><div class="v mono">' + f.toFixed(3) + '</div></div>' +
+          '<div><div class="k">Distinguishability at k=' + ep.erased.length + '</div><div class="v mono">' + DIST[ep.erased.length].toFixed(3) + '</div></div>';
+        /* benchmark note */
+        var bench = "";
+        if(ep.type === "collision"){
+          bench = "The gate's measured blind spot: a superposition of two stored patterns is <b>always accepted</b> and named as one of the pair — never refused, at every similarity tested. No confidence setting and no fidelity reading fixes this; abstention on an ambiguous, between-two-patterns state is the only defence.";
+        } else if(ep.type === "random"){
+          bench = "No stored pattern produces this boundary state. In the hard-recall measurements the gate's weakness is the opposite temptation: at a natural threshold it accepts nearly every random probe. A low decoder fidelity — " + f.toFixed(3) + " here — is the honest tell.";
+        } else if(ep.erased.length >= 3){
+          bench = "Beyond the line: distinguishability at k = 3 falls to <b>0.737</b> (from 0.973 at k = 1, 0.919 at k = 2). The decoder's reach is noise-dependent — k = 4 at ε = 0.01, k = 3 at ε = 0.1, only k = 1 at ε = 0.5 — so at this damage level the noise level decides whether the bulk is truly recoverable.";
+        } else if(parseFloat(ep.eps) >= 0.5){
+          bench = "High noise shrinks the decoder's world: at ε = 0.5 it holds only to <b>k = 1</b>, and worst-case fidelity at k = 2 drops to 0.862. The same erasure count that is safe at low noise is a gamble here — recovery is a noise budget.";
+        } else if(ep.erased.length > 0){
+          bench = "Inside the threshold: the erasure threshold by distinguishability is <b>2</b> (k = 1 → 0.973, k = 2 → 0.919, k = 3 → 0.737), and with exact input the decoder recovers the bulk at every k ≤ 5 — conditioning, not rank, is what fails first as erasures pile up.";
+        } else {
+          bench = "A clean channel: the encoding is an exact isometry (max |V†V − I| = 1.7×10⁻¹⁵) and the bulk is delocalised — mean single-qubit entropy 0.955 bits, so no single boundary qubit gives the pattern away. It only exists as the whole boundary read together.";
+        }
+        $("dbBench").innerHTML = bench;
+        $("btnNext").textContent = idx === EPISODES.length - 1 ? "See the final calibration" : "Next episode";
+        $("debrief").className = "card show";
+        $("hudState").textContent = "Episode resolved";
+        $("debrief").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block:"nearest" });
+      }
+
+      function next(){
+        if(S.ep >= EPISODES.length - 1){ showEnd(); return; }
+        S.ep++;
+        runEpisode();
+      }
+
+      function showEnd(){
+        $("screen-game").classList.remove("on");
+        $("screen-end").classList.add("on");
+        $("finalScore").textContent = S.score;
+        var grade, read;
+        if(S.score >= 950){ grade = "Gatekeeper-grade calibration"; read = "You read the boundary like the membrane itself — projecting hard when the state was clean, refusing exactly the states the gate cannot be trusted on."; }
+        else if(S.score >= 700){ grade = "Well calibrated"; read = "Strong run. Your confidence tracked the evidence: damage and noise made you careful, and the fakes mostly failed to bait you."; }
+        else if(S.score >= 400){ grade = "The membrane holds"; read = "A working membrane. The misses are the instructive kind — check the calibration table for where your stated confidence outran the boundary's evidence."; }
+        else if(S.score >= 0){ grade = "Learning the boundary"; read = "The bulk survived, barely. The pattern of this game: erasures up to 2 are usually safe, high noise is not, and anything that sits between two patterns deserves refusal."; }
+        else { grade = "The gate thanks you for your confidence"; read = "Confidence is expensive when it's wrong — the quadratic scoring rule makes sure of that. The membrane's own lesson applies: when the state is ambiguous, abstaining is a positive play, not a missed one."; }
+        $("finalGrade").textContent = grade;
+        $("finalRead").textContent = read;
+        /* calibration buckets */
+        var buckets = [ [50,64],[65,79],[80,89],[90,99] ], rows = "";
+        buckets.forEach(function(b){
+          var inB = S.projections.filter(function(p){ return p.conf >= b[0] && p.conf <= b[1]; });
+          if(!inB.length){ rows += "<tr><td class='mono'>" + b[0] + "–" + b[1] + "%</td><td>0</td><td>—</td><td>—</td></tr>"; return; }
+          var stated = inB.reduce(function(a,p){ return a+p.conf; },0)/inB.length;
+          var acc = inB.filter(function(p){ return p.correct; }).length/inB.length*100;
+          rows += "<tr><td class='mono'>" + b[0] + "–" + b[1] + "%</td><td>" + inB.length + "</td><td class='mono'>" + stated.toFixed(0) + "%</td><td class='mono'>" + acc.toFixed(0) + "%</td></tr>";
+        });
+        $("calBody").innerHTML = rows;
+        var note = "";
+        if(S.projections.length){
+          var mc = S.projections.reduce(function(a,p){ return a+p.conf; },0)/S.projections.length;
+          var ac = S.projRight/S.projections.length*100;
+          var diff = mc - ac;
+          note = "Across " + S.projections.length + " projections your mean stated confidence was " + mc.toFixed(0) + "% against an actual hit rate of " + ac.toFixed(0) + "% — " +
+            (Math.abs(diff) <= 8 ? "well matched. That is calibration." : diff > 0 ? "you were overconfident by about " + diff.toFixed(0) + " points. The boundary's evidence was weaker than it felt." : "you were underconfident by about " + Math.abs(diff).toFixed(0) + " points — the membrane knew more than you claimed.");
+        } else {
+          note = "You never projected — a membrane of pure refusal. Safe against every fake, but every real pattern passed unanswered at −10 each.";
+        }
+        $("calNote").textContent = note;
+        $("statRow").innerHTML =
+          '<div class="stat"><div class="n" style="color:var(--good)">' + S.projRight + '</div><div class="l">Correct projections</div></div>' +
+          '<div class="stat"><div class="n" style="color:var(--danger)">' + S.projWrong + '</div><div class="l">Wrong projections</div></div>' +
+          '<div class="stat"><div class="n" style="color:var(--cyan)">' + S.abstRight + '</div><div class="l">Good abstentions</div></div>' +
+          '<div class="stat"><div class="n" style="color:var(--gold)">' + S.abstWrong + '</div><div class="l">Missed real patterns</div></div>' +
+          '<div class="stat"><div class="n">' + S.decoders + '</div><div class="l">Decoders opened (−15 ea)</div></div>' +
+          '<div class="stat"><div class="n">' + (S.projRight+S.projWrong+S.abstRight+S.abstWrong) + '</div><div class="l">Episodes resolved</div></div>';
+        window.scrollTo({ top:0, behavior: REDUCED ? "auto" : "smooth" });
+      }
+
+      /* ================= Wire up ================= */
+      buildBoard(); buildCodex(); buildBars(); newGame(); buildDots();
+      $("confRange").addEventListener("input", updateConf);
+      updateConf();
+      $("btnDecoder").addEventListener("click", openDecoder);
+      $("btnProject").addEventListener("click", function(){ decide("project"); });
+      $("btnAbstain").addEventListener("click", function(){ decide("abstain"); });
+      $("btnNext").addEventListener("click", next);
+      $("btnStart").addEventListener("click", function(){
+        $("screen-intro").classList.remove("on");
+        $("screen-game").classList.add("on");
+        window.scrollTo(0,0);
+        runEpisode();
+      });
+      $("btnAgain").addEventListener("click", function(){
+        newGame(); buildDots();
+        $("scoreVal").textContent = "0";
+        $("screen-end").classList.remove("on");
+        $("screen-game").classList.add("on");
+        window.scrollTo(0,0);
+        runEpisode();
+      });
+      requestAnimationFrame(tick);
+    })();
+    </script>
+  </body>
+</html>
